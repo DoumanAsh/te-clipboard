@@ -1,0 +1,19 @@
+[package]
+name = "te-clipboard"
+version = "0.1.0"
+authors = ["Douman <douman@gmx.se>"]
+edition = "2018"
+
+[dependencies]
+lazy_static = "1"
+
+clipboard-win = "2"
+winapi = "0.3"
+
+serde = "1"
+serde_derive = "1"
+toml = "0.5"
+regex = "1"
+
+[lib]
+crate-type = ["cdylib"]

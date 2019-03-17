@@ -1,0 +1,46 @@
+#Regex syntax reference https://doc.rust-lang.org/regex/regex/index.html#syntax
+
+## Replacement patterns
+##
+## All instances of $name in the replacement text is replaced with the corresponding capture group
+##
+## 'name' may be an integer corresponding to the index of the capture group (counted by order of
+## opening parenthesis where 0 is the entire match) or it can be a name (consisting of letters,
+## digits or underscores) corresponding to a named capture group.
+##
+## If name isn't a valid capture group (whether the name doesn't exist or isn't a valid index), then
+## it is replaced with the empty string.
+##
+## To write a literal $ use $$.
+
+##Remove all white space characters as japanese isn't supposed to have it anyway.
+[[replace]]
+# Pattern is text or regular expression to look for.
+pattern = "\\s"
+# All occurrences of pattern will be replaced with following text.
+replacement = ""
+# Optional limit to number of replacements. By default 0 which means replace all.
+limit = 0
+
+## Extract dialogue/thought
+#Case when we have just [dialogue]
+[[replace]]
+pattern = "^[「（](.+)[」 ）]$"
+replacement = "$1"
+
+# It is a lazy approach though as we extract text between typical brackets used for
+# dialogues or character thinking.
+[[replace]]
+pattern = ".*[「（]([^」 ）]+).*"
+replacement = "$1"
+
+## Sengoku Hime 7 text corrections
+# Remove stupid <color/> tags
+[[replace]]
+pattern = "<[^>]+>"
+replacement = ""
+
+# Remove partial text repetitions, but it is not supported by my regex engine.
+#[[replace]]
+#pattern = ".*(.+)\\1+"
+#replacement = "$1"
