@@ -17,3 +17,7 @@ regex = "1"
 
 [lib]
 crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+opt-level = "z"
