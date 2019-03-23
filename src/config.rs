@@ -39,10 +39,16 @@ pub struct Replace {
 }
 
 #[derive(Deserialize, Debug, Default)]
+pub struct Settings {
+    #[serde(default)]
+    pub modify_original: bool
+}
+
+#[derive(Deserialize, Debug, Default)]
 ///Configuration of application
 pub struct DeConfig {
-    //#[serde(default)]
-    //pub text_repetitions: bool,
+    #[serde(default)]
+    pub settings: Settings,
     #[serde(default)]
     pub replace: Option<Vec<Replace>>
 }
@@ -50,13 +56,14 @@ pub struct DeConfig {
 #[derive(Debug, Default)]
 ///Configuration of application
 pub struct Config {
-    //pub text_repetitions: bool,
+    pub settings: Settings,
     pub replace: Vec<Replace>
 }
 
 impl Into<Config> for DeConfig {
     fn into(self) -> Config {
         Config {
+            settings: self.settings,
             replace: self.replace.unwrap_or_else(|| Vec::with_capacity(0)),
         }
     }

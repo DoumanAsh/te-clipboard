@@ -1,8 +1,9 @@
 use winapi::um::winbase::lstrlenW as wstrlen;
-use clipboard_win::set_clipboard_string;
 
-use std::os::raw::{c_char};
-use std::slice;
+use std::os::raw::{c_void, c_char};
+use std::borrow::Cow;
+use std::os::windows::ffi::OsStrExt;
+use std::{slice, ptr, mem};
 
 mod config;
 mod rt;
@@ -17,7 +18,7 @@ pub struct InfoForExtension {
 
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern "C" fn OnNewSentence(sentence: *mut u16, info: *const InfoForExtension) -> *mut u16 {
+pub unsafe extern "C" fn OnNewSentence(mut sentence: *mut u16, info: *const InfoForExtension) -> *mut u16 {
     if info.is_null() {
         return sentence;
     }
@@ -34,15 +35,39 @@ pub unsafe extern "C" fn OnNewSentence(sentence: *mut u16, info: *const InfoForE
     };
 
     let string = slice::from_raw_parts(sentence, size as usize);
-    let mut string = String::from_utf16_lossy(string);
-    let orig_len = string.len();
+    let string = String::from_utf16_lossy(string);
+    let original_len = string.len();
+    let mut string = Cow::Owned(string);
 
-    for replace in Config::get().replace.iter() {
-        string = replace.pattern.replacen(&string, replace.limit, replace.replacement.as_str()).to_string();
+    let config = Config::get();
+    for replace in config.replace.iter() {
+        match replace.pattern.replacen(&string, replace.limit, replace.replacement.as_str()) {
+            Cow::Owned(new) => {
+                string = Cow::Owned(new);
+            },
+            _ => (),
+        }
     }
 
-    if orig_len != string.len() {
-        let _ = set_clipboard_string(&string);
+    let data = std::ffi::OsStr::new(string.as_ref());
+    let mut data = data.encode_wide().collect::<Vec<u16>>();
+    data.push(0);
+    let data = slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * mem::size_of::<u16>());
+
+    let _ = clipboard_win::raw::set(clipboard_win::formats::CF_UNICODETEXT, data);
+
+    if config.settings.modify_original {
+        if original_len != string.as_ref().len() {
+            let new_sentence = winapi::um::heapapi::HeapReAlloc(winapi::um::heapapi::GetProcessHeap(), 0, sentence as *mut c_void, data.len());
+            if new_sentence.is_null() {
+                //We back down, if allocation fails, which is unlikely, right?
+                return sentence;
+            } else {
+                sentence = new_sentence as *mut u16;
+            }
+        }
+
+        ptr::copy_nonoverlapping(data.as_ptr(), sentence as *mut u8, data.len());
     }
 
     sentence
