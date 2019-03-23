@@ -40,6 +40,11 @@ replacement = "$1"
 pattern = "<[^>]+>"
 replacement = ""
 
+## Remove trash characters from furigana in Sorceress＊Alive!
+[[replace]]
+pattern = "[\u0000-\u0009\u000b-\u2fff\ua000-\uffff]+"
+replacement = ""
+
 # Remove partial text repetitions, but it is not supported by my regex engine.
 #[[replace]]
 #pattern = ".*(.+)\\1+"

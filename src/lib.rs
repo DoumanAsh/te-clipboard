@@ -1,15 +1,13 @@
 use winapi::um::winbase::lstrlenW as wstrlen;
 use clipboard_win::set_clipboard_string;
-use lazy_static::lazy_static;
 
 use std::os::raw::{c_char};
 use std::slice;
 
 mod config;
+mod rt;
 
-lazy_static! {
-    static ref CONFIG: config::Config = config::Config::from_file("te-clipboard.toml");
-}
+use config::Config;
 
 #[repr(C)]
 pub struct InfoForExtension {
@@ -39,7 +37,7 @@ pub unsafe extern "C" fn OnNewSentence(sentence: *mut u16, info: *const InfoForE
     let mut string = String::from_utf16_lossy(string);
     let orig_len = string.len();
 
-    for replace in CONFIG.replace.iter() {
+    for replace in Config::get().replace.iter() {
         string = replace.pattern.replacen(&string, replace.limit, replace.replacement.as_str()).to_string();
     }
 

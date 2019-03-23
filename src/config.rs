@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use serde_derive::{Deserialize};
 use serde::{Deserialize};
 use regex::Regex;
@@ -5,6 +6,22 @@ use regex::Regex;
 use std::fs::File;
 use std::borrow::Cow;
 use std::io::Read;
+
+use crate::rt;
+
+const MISSING_CONFIG_ERROR: &str = "Config file is missing...
+
+Please be sure that file te-clipboard.toml is present in directory with Textractor
+";
+const CANNOT_READ_CONFIG_ERROR: &str = "Cannot read config file...
+
+Please be sure that file te-clipboard.toml is available for read to all users.
+Or start Textractor with administrative rights.
+";
+const INVALID_CONFIG_ERROR: &str = "Config file is not valid TOML file...
+
+Please be sure to check the format of file te-clipboard.toml
+";
 
 pub fn deserialize_to_regex<'de, D: serde::de::Deserializer<'de>>(re_str: D) -> Result<Regex, D::Error> {
     let re_str: Cow<'de, str> = Cow::deserialize(re_str)?;
@@ -46,21 +63,39 @@ impl Into<Config> for DeConfig {
 }
 
 impl Config {
+    #[inline(always)]
+    pub fn get() -> &'static Self {
+        lazy_static! {
+            static ref CONFIG: Config = Config::from_file("te-clipboard.toml");
+        }
+
+        &CONFIG
+    }
+
     pub fn from_file(path: &str) -> Self {
         let mut file = match File::open(&path) {
             Ok(file) => file,
-            Err(_) => return Config::default(),
+            Err(_) => {
+                rt::notify(MISSING_CONFIG_ERROR);
+                return Config::default();
+            }
         };
 
         let mut buffer = String::new();
         match file.read_to_string(&mut buffer) {
             Ok(_) => (),
-            Err(_) => return Config::default(),
+            Err(_) => {
+                rt::notify(CANNOT_READ_CONFIG_ERROR);
+                return Config::default();
+            }
         }
 
         match toml::from_str::<DeConfig>(&buffer) {
             Ok(config) => config.into(),
-            Err(_) => Config::default(),
+            Err(_) => {
+                rt::notify(INVALID_CONFIG_ERROR);
+                Config::default()
+            }
         }
     }
 }
