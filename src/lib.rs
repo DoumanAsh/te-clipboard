@@ -54,7 +54,7 @@ pub unsafe extern "C" fn OnNewSentence(mut sentence: *mut u16, info: *const Info
     data.push(0);
     let data = slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * mem::size_of::<u16>());
 
-    let _ = clipboard_win::raw::set(clipboard_win::formats::CF_UNICODETEXT, data);
+    let _ = clipboard_win::Clipboard::new().and_then(|clip| clip.set(clipboard_win::formats::CF_UNICODETEXT, data));
 
     if config.settings.modify_original {
         if original_len != string.as_ref().len() {
