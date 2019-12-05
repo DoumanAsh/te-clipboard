@@ -5,10 +5,11 @@ use lazy_static::lazy_static;
 
 use std::thread;
 use std::os::raw::{c_void, c_int, c_ulong};
+use std::sync::mpsc::{self, sync_channel};
 
 lazy_static! {
-    static ref NOTIFY_SEND: crossbeam_channel::Sender<&'static str> = {
-        let (sender, recv) = crossbeam_channel::bounded(1);
+    static ref NOTIFY_SEND: mpsc::SyncSender<&'static str> = {
+        let (sender, recv) = sync_channel(1);
 
         thread::spawn(move || loop {
             match recv.recv() {

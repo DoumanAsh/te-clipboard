@@ -1,6 +1,6 @@
 [package]
 name = "te-clipboard"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Douman <douman@gmx.se>"]
 edition = "2018"
 
@@ -10,9 +10,8 @@ features = ["heapapi"]
 
 [dependencies]
 lazy_static = "1"
-crossbeam-channel = "0"
 
-clipboard-win = "2"
+clipboard-win = "3.0.0-alpha"
 windows-win = "2"
 
 serde = "1"
