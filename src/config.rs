@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use serde_derive::{Deserialize};
 use serde::{Deserialize};
 use regex::Regex;
@@ -72,11 +71,19 @@ impl Into<Config> for DeConfig {
 impl Config {
     #[inline(always)]
     pub fn get() -> &'static Self {
-        lazy_static! {
-            static ref CONFIG: Config = Config::from_file("te-clipboard.toml");
-        }
+        use std::sync::Once;
+        use core::mem::MaybeUninit;
 
-        &CONFIG
+        static mut CONFIG: MaybeUninit<Config> = MaybeUninit::uninit();
+        static INIT: Once = Once::new();
+
+        INIT.call_once(|| unsafe {
+            core::ptr::write(CONFIG.as_mut_ptr(), Config::from_file("te-clipboard.toml"));
+        });
+
+        unsafe {
+            &*CONFIG.as_ptr()
+        }
     }
 
     pub fn from_file(path: &str) -> Self {
